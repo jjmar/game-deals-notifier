@@ -1,2 +1,5 @@
 node_modules
 .serverless
+.env
+s_notifier.js
+serverless_sdk
