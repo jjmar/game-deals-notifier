@@ -4,20 +4,27 @@ service: game-deals-notifier
 
 frameworkVersion: '2'
 
+useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
+  profile: serverless
+  environment:
+    REDDIT_CLIENT_ID: ${env:REDDIT_CLIENT_ID}
+    REDDIT_CLIENT_SECRET: ${env:REDDIT_CLIENT_SECRET}
+    USER_AGENT: ${env:USER_AGENT}
+
+resources:
+  Resources:
+    lastSavedDealStore:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: last-deal-saved
 
 functions:
-  rateHandler:
+  notifier:
     handler: handler.run
     events:
-      # Invoke Lambda function every minute
-      - schedule: rate(1 minute)
-  cronHandler:
-    handler: handler.run
-    events:
-      # Invoke Lambda function every 2nd minute from Mon-Fri
-      - schedule: cron(0/2 * ? * MON-FRI *)
+      - schedule: rate(2 hours)
