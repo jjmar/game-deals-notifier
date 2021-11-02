@@ -15,13 +15,19 @@ provider:
     REDDIT_CLIENT_ID: ${env:REDDIT_CLIENT_ID}
     REDDIT_CLIENT_SECRET: ${env:REDDIT_CLIENT_SECRET}
     USER_AGENT: ${env:USER_AGENT}
+    BUCKET_NAME: ${env:BUCKET_NAME}
 
 resources:
   Resources:
     lastSavedDealStore:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: last-deal-saved
+        BucketName: ${env:BUCKET_NAME}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
 
 functions:
   notifier:
