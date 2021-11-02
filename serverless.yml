@@ -11,11 +11,34 @@ provider:
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
   profile: serverless
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 's3:GetObject'
+            - 's3:PutObject'
+          Resource:
+            Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - ${env:BUCKET_NAME}
+                - '/*'
+        - Effect: 'Allow'
+          Action:
+            - 's3:ListBucket'
+          Resource:
+            Fn::Join:
+              - ''
+              - - 'arn:aws:s3:::'
+                - ${env:BUCKET_NAME}
+
   environment:
     REDDIT_CLIENT_ID: ${env:REDDIT_CLIENT_ID}
     REDDIT_CLIENT_SECRET: ${env:REDDIT_CLIENT_SECRET}
     USER_AGENT: ${env:USER_AGENT}
     BUCKET_NAME: ${env:BUCKET_NAME}
+    LAST_DEAL_FILENAME: ${env:LAST_DEAL_FILENAME}
 
 resources:
   Resources:

@@ -2,6 +2,8 @@
 
 const axios = require('axios');
 const FormData = require('form-data');
+const aws = require('aws-sdk');
+const s3 = new aws.S3();
 
 axios.defaults.headers.common['User-Agent'] = process.env.USER_AGENT;
 
@@ -15,7 +17,7 @@ module.exports.run = async (event, context) => {
 
   console.log(freeDeals);
 
-  saveLastDealCrawledName(allDeals.slice(-1)[0].data.name);
+  await saveLastDealCrawledName(allDeals.slice(-1)[0].data.name);
 };
 
 
@@ -71,9 +73,32 @@ function isDealAFreeGame(deal) {
 }
 
 async function getLastCrawledDealName() {
-  return null; //'t3_ql900j';
+  const params = {
+    Bucket: process.env.BUCKET_NAME,
+    Key: process.env.LAST_DEAL_FILENAME
+  };
+
+  try {
+    const response = await s3.getObject(params).promise();
+  } catch (error) {
+
+    if (error && error.code == 'NoSuchKey') {
+      return null;
+    }
+
+    throw error; 
+  }
+
+  return response.Body.toString();
 }
 
-function saveLastDealCrawledName(dealName) {
-  console.log('Saving', dealName);
+async function saveLastDealCrawledName(dealName) {
+  const params = {
+    Bucket: process.env.BUCKET_NAME,
+    Key: process.env.LAST_DEAL_FILENAME,
+    Body: dealName,
+    ContentType: 'text/plain'
+  };
+
+  await s3.putObject(params).promise();
 }
