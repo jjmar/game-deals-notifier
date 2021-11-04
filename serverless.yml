@@ -74,4 +74,4 @@ functions:
   notifier:
     handler: handler.run
     events:
-      - schedule: rate(2 hours)
+      - schedule: rate(6 hours)
