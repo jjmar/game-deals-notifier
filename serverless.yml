@@ -38,7 +38,9 @@ provider:
           Resource:
             Fn::Join:
               - ''
-              - - 'arn:aws:sns:us-east-1:'
+              - - 'arn:aws:sns:'
+                - '${env:REGION}'
+                - ':'
                 - ${aws:accountId}
                 - ':'
                 - ${env:TOPIC_NAME}
@@ -49,7 +51,8 @@ provider:
     USER_AGENT: ${env:USER_AGENT}
     BUCKET_NAME: ${env:BUCKET_NAME}
     LAST_DEAL_FILENAME: ${env:LAST_DEAL_FILENAME}
-    TOPIC_ARN: arn:aws:sns:us-east-1:${aws:accountId}:${env:TOPIC_NAME}
+    TOPIC_ARN: arn:aws:sns:${env:REGION}:${aws:accountId}:${env:TOPIC_NAME}
+    REGION: ${env:REGION}
 
 resources:
   Resources:
