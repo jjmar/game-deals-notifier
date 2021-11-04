@@ -4,6 +4,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const aws = require('aws-sdk');
 const s3 = new aws.S3();
+const sns = new aws.SNS();
 
 axios.defaults.headers.common['User-Agent'] = process.env.USER_AGENT;
 
@@ -15,7 +16,7 @@ module.exports.run = async (event, context) => {
 
   const freeDeals = getFreeDeals(allDeals);
 
-  console.log('Free Deals', freeDeals);
+  await sendDealNotifications(freeDeals);
 
   if (allDeals.length >= 1) {
     await saveLastDealCrawledName(allDeals[0].data.name);
@@ -57,9 +58,7 @@ async function queryGameDeals(lastCrawledDealName, bearerToken) {
 }
 
 function getFreeDeals(gamedeals) {
-  return gamedeals.filter(deal => {
-    return isDealAFreeGame(deal);
-  });
+  return gamedeals.filter(deal => isDealAFreeGame(deal));
 }
 
 function isDealAFreeGame(deal) {
@@ -72,6 +71,22 @@ function isDealAFreeGame(deal) {
   const dealIsTwitchPrime = dealTitle.includes('twitch prime') || dealTitle.includes('prime gaming');
 
   return (dealContainsFree || dealContainsHundredPercent) && !(dealContainsWeekend || dealIsGamesPass || dealIsTwitchPrime);
+}
+
+async function sendDealNotifications(freeDeals) {
+  if (freeDeals.length == 0) return;
+
+  const formattedDeals = freeDeals.map(deal => {
+    return `${deal.data.title}: ${deal.data.url_overridden_by_dest || deal.data.url}`
+  });
+
+  const params = {
+    Message: formattedDeals.join('\r\n'),
+    Subject: 'New Free Games',
+    TopicArn: process.env.TOPIC_ARN
+  };
+
+  await sns.publish(params).promise();
 }
 
 async function getLastCrawledDealName() {
