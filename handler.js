@@ -15,9 +15,11 @@ module.exports.run = async (event, context) => {
 
   const freeDeals = getFreeDeals(allDeals);
 
-  console.log(freeDeals);
+  console.log('Free Deals', freeDeals);
 
-  await saveLastDealCrawledName(allDeals.slice(-1)[0].data.name);
+  if (allDeals.length >= 1) {
+    await saveLastDealCrawledName(allDeals[0].data.name);
+  }
 };
 
 
@@ -78,8 +80,10 @@ async function getLastCrawledDealName() {
     Key: process.env.LAST_DEAL_FILENAME
   };
 
+  let response;
+
   try {
-    const response = await s3.getObject(params).promise();
+    response = await s3.getObject(params).promise();
   } catch (error) {
 
     if (error && error.code == 'NoSuchKey') {
