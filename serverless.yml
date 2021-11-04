@@ -32,6 +32,16 @@ provider:
               - ''
               - - 'arn:aws:s3:::'
                 - ${env:BUCKET_NAME}
+        - Effect: 'Allow'
+          Action:
+            - 'sns:Publish'
+          Resource:
+            Fn::Join:
+              - ''
+              - - 'arn:aws:sns:us-east-1:'
+                - ${aws:accountId}
+                - ':'
+                - ${env:TOPIC_NAME}
 
   environment:
     REDDIT_CLIENT_ID: ${env:REDDIT_CLIENT_ID}
@@ -39,6 +49,7 @@ provider:
     USER_AGENT: ${env:USER_AGENT}
     BUCKET_NAME: ${env:BUCKET_NAME}
     LAST_DEAL_FILENAME: ${env:LAST_DEAL_FILENAME}
+    TOPIC_ARN: arn:aws:sns:us-east-1:${aws:accountId}:${env:TOPIC_NAME}
 
 resources:
   Resources:
@@ -51,6 +62,10 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
+    dealsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${env:TOPIC_NAME}
 
 functions:
   notifier:
