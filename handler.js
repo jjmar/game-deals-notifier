@@ -3,6 +3,9 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const aws = require('aws-sdk');
+
+aws.config.update({region: process.env.REGION});
+
 const s3 = new aws.S3();
 const sns = new aws.SNS();
 
