@@ -13,16 +13,16 @@ axios.defaults.headers.common['User-Agent'] = process.env.USER_AGENT;
 
 module.exports.run = async (event, context) => {
   const accessToken = await getRedditAccessToken();
-  const lastCrawledDealName = await getLastCrawledDealName();
+  const lastCrawledDealTime = await getLastCrawledDealTime();
 
-  const allDeals = await queryGameDeals(lastCrawledDealName, accessToken);
+  const allDeals = await queryGameDeals(lastCrawledDealTime, accessToken);
 
   const freeDeals = getFreeDeals(allDeals);
 
   await sendDealNotifications(freeDeals);
 
   if (allDeals.length >= 1) {
-    await saveLastDealCrawledName(allDeals[0].data.name);
+    await saveLastDealCrawledTime(allDeals[0].data.created_utc);
   }
 };
 
@@ -44,20 +44,26 @@ async function getRedditAccessToken() {
   return response.data.access_token;
 }
 
-async function queryGameDeals(lastCrawledDealName, bearerToken) {
+async function queryGameDeals(lastCrawledDealTime, bearerToken) {
   const options = {
     headers: {
       'Authorization': `Bearer ${bearerToken}`
     },
     params: {
-      before: lastCrawledDealName,
       limit: 100
     }
   }
 
   const response = await axios.get('https://oauth.reddit.com/r/gamedeals/new', options);
 
-  return response.data.data.children;
+  let recentDeals = [];
+
+  for (const deal of response.data.data.children) {
+    if (deal.data.created_utc <= lastCrawledDealTime) break;
+    recentDeals.push(deal);
+  }
+
+  return recentDeals;
 }
 
 function getFreeDeals(gamedeals) {
@@ -92,7 +98,7 @@ async function sendDealNotifications(freeDeals) {
   await sns.publish(params).promise();
 }
 
-async function getLastCrawledDealName() {
+async function getLastCrawledDealTime() {
   const params = {
     Bucket: process.env.BUCKET_NAME,
     Key: process.env.LAST_DEAL_FILENAME
@@ -111,14 +117,14 @@ async function getLastCrawledDealName() {
     throw error; 
   }
 
-  return response.Body.toString();
+  return parseFloat(response.Body.toString());
 }
 
-async function saveLastDealCrawledName(dealName) {
+async function saveLastDealCrawledTime(dealTime) {
   const params = {
     Bucket: process.env.BUCKET_NAME,
     Key: process.env.LAST_DEAL_FILENAME,
-    Body: dealName,
+    Body: dealTime.toString(),
     ContentType: 'text/plain'
   };
 

@@ -31,6 +31,7 @@ Prerequisites:
   - Have set the above environment variables locally in a `.env` file
 
 Running:
+  - `npm install`
   - `serverless deploy`
 
 Removing:
